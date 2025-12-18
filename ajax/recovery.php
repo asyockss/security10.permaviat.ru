@@ -1,6 +1,22 @@
 <?php
 	session_start();
 	include("../settings/connect_datebase.php");
+	require_once("../libs/autoload.php");
+	
+	// Проверка reCAPTCHA
+	if(isset($_POST['g-recaptcha-response']) == false) {
+		echo "-2"; // ошибка капчи
+		exit;
+	}
+	
+	$Secret = "6LdksC8sAAAAAC1ffOPHWlVXiL_-uiX0w0f46rW8";
+	$Recaptcha = new \ReCaptcha\ReCaptcha($Secret);
+	$Response = $Recaptcha->verify($_POST["g-recaptcha-response"], $_SERVER["REMOTE_ADDR"]);
+	
+	if(!$Response->isSuccess()) {
+		echo "-2"; // ошибка капчи
+		exit;
+	}
 	
 	$login = $_POST['login'];
 	
@@ -27,9 +43,9 @@
 		return $password;
 	}
 	
-	if($id != 0) {
+	if($id != -1) {
 		//обновляем пароль
-		$password = PasswordGeneration();;
+		$password = PasswordGeneration();
 		// проверяем не используется ли пароль 
 		$query_password = $mysqli->query("SELECT * FROM `users` WHERE `password`= '".md5($password)."';");
 		while($password_read = $query_password->fetch_row()) {

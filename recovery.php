@@ -16,6 +16,7 @@
 <html>
 	<head> 
 		<script src="https://code.jquery.com/jquery-1.8.3.js"></script>
+		<script src="https://www.google.com/recaptcha/api.js"></script>
 		<meta charset="utf-8">
 		<title> Восстановление пароля </title>
 		
@@ -43,6 +44,13 @@
 					Непредвиденная ошибка.
 					<div class="message">Указанный вами адрес электронной почты не существует в системе, проверьте правильность ввода данных.</div>
 				</div>
+				
+				<div class="captcha-error" style="display: none;">
+					<img src="img/ic-close.png" class="close" onclick="DisableCaptchaError()"/>
+					<img src = "img/ic-error.png"/>
+					Ошибка проверки.
+					<div class="message">Необходимо пройти проверку "Я не робот".</div>
+				</div>
 			
 				<div class="success" style="display: none;">
 					<img src = "img/ic_success.png">
@@ -59,6 +67,10 @@
 					<div style="font-size: 12px; margin-bottom: 10px;">На указанную вами почту будет выслан новый пароль, для входа в систему.</div>
 					<input name="_login" type="text" placeholder="E-mail@mail.ru"/>
 					
+					<center>
+						<div class="g-recaptcha" data-sitekey="6LdksC8sAAAAAIAdYhq_P6sPTnkfVCgcOhbpE_Dl"></div>
+					</center>
+					
 					<input type="button" class="button" value="Отправить" onclick="LogIn()" style="margin-top: 0px;"/>
 					<img src = "img/loading.gif" class="loading" style="margin-top: 0px;"/>
 				</div>
@@ -73,42 +85,66 @@
 		
 		<script>
 			var errorWindow = document.getElementsByClassName("input-error")[0];
+			var captchaErrorWindow = document.getElementsByClassName("captcha-error")[0];
 			var loading = document.getElementsByClassName("loading")[0];
 			var button = document.getElementsByClassName("button")[0];
 			
 			errorWindow.style.display = "none";
+			captchaErrorWindow.style.display = "none";
 		
 			function DisableError() {
 				errorWindow.style.display = "none";
+			}
+			
+			function DisableCaptchaError() {
+				captchaErrorWindow.style.display = "none";
 			}
 			
 			function EnableError() {
 				errorWindow.style.display = "block";
 			}
 			
+			function EnableCaptchaError() {
+				captchaErrorWindow.style.display = "block";
+			}
+			
 			function LogIn() {
 				var _login = document.getElementsByName("_login")[0].value;
+				
+				if(_login == "") {
+					alert("Введите адрес электронной почты.");
+					return;
+				}
+				
+				var captcha = grecaptcha.getResponse();
+				if (captcha.length == 0) {
+					EnableCaptchaError();
+					return;
+				}
+				
 				loading.style.display = "block";
 				button.className = "button_diactive";
 				
 				var data = new FormData();
 				data.append("login", _login);
+				data.append("g-recaptcha-response", captcha);
 				
 				// AJAX запрос
 				$.ajax({
 					url         : 'ajax/recovery.php',
-					type        : 'POST', // важно!
+					type        : 'POST',
 					data        : data,
 					cache       : false,
 					dataType    : 'html',
-					// отключаем обработку передаваемых данных, пусть передаются как есть
 					processData : false,
-					// отключаем установку заголовка типа запроса. Так jQuery скажет серверу что это строковой запрос
 					contentType : false, 
-					// функция успешного ответа сервера
 					success: function (_data) {
-						
-						if(_data == -1) {
+						if(_data == -2) {
+							EnableCaptchaError();
+							grecaptcha.reset();
+							loading.style.display = "none";
+							button.className = "button";
+						} else if(_data == -1) {
 							EnableError();
 							loading.style.display = "none";
 							button.className = "button";
@@ -120,7 +156,6 @@
 							document.getElementsByClassName('login')[0].style.display = "none";
 						}
 					},
-					// функция ошибки
 					error: function( ){
 						console.log('Системная ошибка!');
 						loading.style.display = "none";
