@@ -86,7 +86,7 @@
 				}
 
 				var captcha = grecaptcha.getResponse();
-				if (captcha.lenght == 0) {
+				if (captcha.length == 0) {
 					alert("Необходимо пройти проверну на \*Я не робот\*");
 					return
 				}

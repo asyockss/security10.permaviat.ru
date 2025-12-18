@@ -1,7 +1,7 @@
 <?php
 	session_start();
 	require_once("../settings/connect_datebase.php");
-	//require_once("../libs/autoload.php");
+	require_once("../libs/autoload.php");
 
 	$login = $_POST['login'];
 	$password = $_POST['password'];
