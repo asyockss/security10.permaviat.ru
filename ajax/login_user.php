@@ -6,17 +6,20 @@
 	$login = $_POST['login'];
 	$password = $_POST['password'];
 	
-	// Проверка reCAPTCHA
+	// Проверка reCAPTCHA v3
 	if(isset($_POST['g-recaptcha-response']) == false) {
 		echo "captcha_error";
 		exit;
 	}
 	
-	$Secret = "6LdksC8sAAAAAC1ffOPHWlVXiL_-uiX0w0f46rW8";
-	$Recaptcha = new \ReCaptcha\ReCaptcha($Secret);
-	$Response = $Recaptcha->verify($_POST["g-recaptcha-response"], $_SERVER["REMOTE_ADDR"]);
+	$Secret = "6Lcovy8sAAAAAAZW9cZtLlMqPukyUbao3uplKzVp";
+	$token = $_POST['g-recaptcha-response'];
+
+	// Проверка токена reCAPTCHA v3
+	$response = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret=".$Secret."&response=".$token);
+	$responseKeys = json_decode($response, true);
 	
-	if(!$Response->isSuccess()) {
+	if(!$responseKeys["success"] || $responseKeys["score"] < 0.5) {
 		echo "captcha_error";
 		exit;
 	}

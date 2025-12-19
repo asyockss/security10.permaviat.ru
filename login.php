@@ -19,8 +19,20 @@
 		<title> Авторизация </title>
 		
 		<script src="https://code.jquery.com/jquery-1.8.3.js"></script>
-		<script src="https://www.google.com/recaptcha/api.js"></script>
+		<script src="https://www.google.com/recaptcha/api.js?render=6Lcovy8sAAAAAGmo-AidwN1E8au49NZpk213jny5"></script>
 		<link rel="stylesheet" href="style.css">
+
+		<script>
+            function getReCaptchaToken(action) {
+                return new Promise((resolve) => {
+                    grecaptcha.ready(function() {
+                        grecaptcha.execute('6Lcovy8sAAAAAGmo-AidwN1E8au49NZpk213jny5', {action: action}).then(function(token) {
+                            resolve(token);
+                        });
+                    });
+                });
+            }
+        </script>
 	</head>
 	<body>
 		<div class="top-menu">
@@ -43,10 +55,6 @@
 					<div class = "sub-name">Пароль:</div>
 					<input name="_password" type="password" placeholder="" onkeypress="return PressToEnter(event)"/>
 					
-					<center>
-						<div class="g-recaptcha" data-sitekey="6LdksC8sAAAAAIAdYhq_P6sPTnkfVCgcOhbpE_Dl"></div>
-					</center>
-					
 					<a href="regin.php">Регистрация</a>
 					<br><a href="recovery.php">Забыли пароль?</a>
 					<input type="button" class="button" value="Войти" onclick="LogIn()"/>
@@ -62,7 +70,7 @@
 		</div>
 		
 		<script>
-			function LogIn() {
+			async function LogIn() {
 				var loading = document.getElementsByClassName("loading")[0];
 				var button = document.getElementsByClassName("button")[0];
 				
@@ -78,9 +86,9 @@
 					return;
 				}
 				
-				var captcha = grecaptcha.getResponse();
-				if (captcha.length == 0) {
-					alert("Необходимо пройти проверку на \"Я не робот\"");
+				var token = await getReCaptchaToken('login');
+				if (!token) {
+					alert("Ошибка проверки безопасности");
 					return;
 				}
 				
@@ -90,7 +98,7 @@
 				var data = new FormData();
 				data.append("login", _login);
 				data.append("password", _password);
-				data.append("g-recaptcha-response", captcha);
+				data.append("g-recaptcha-response", token);
 				
 				// AJAX запрос
 				$.ajax({
@@ -111,7 +119,6 @@
 							loading.style.display = "none";
 							button.className = "button";
 							alert("Ошибка проверки reCAPTCHA.");
-							grecaptcha.reset();
 						} else {
 							localStorage.setItem("token", _data);
 							location.reload();

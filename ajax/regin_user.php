@@ -14,16 +14,17 @@
 		echo $id;
 	} else {
 		if(isset($_POST['g-recaptcha-response']) == false) {
-			echo "Нет пройденной \*Я не робот\*";
+			echo "Ошибка проверки безопасности";
 			exit;
 		}
-		$Secret = "6LdksC8sAAAAAC1ffOPHWlVXiL_-uiX0w0f46rW8";
-		$Recaptcha = new \ReCaptcha\ReCaptcha($Secret);
+		$Secret = "6Lcovy8sAAAAAAZW9cZtLlMqPukyUbao3uplKzVp";
+		$token = $_POST['g-recaptcha-response'];
 
-		$Response = $Recaptcha->verify($_POST["g-recaptcha-response"], $_SERVER["REMOTE_ADDR"]);
-
+		// Проверка токена reCAPTCHA v3
+    	$response = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret=".$Secret."&response=".$token);
+    	$responseKeys = json_decode($response, true);
 		
-		if($Response->isSuccess()) {
+		if($responseKeys["success"] && $responseKeys["score"] >= 0.5) {
 			$mysqli->query("INSERT INTO `users`(`login`, `password`, `roll`) VALUES ('".$login."', '".$password."', 0)");
 			
 			$query_user = $mysqli->query("SELECT * FROM `users` WHERE `login`='".$login."' AND `password`= '".$password."';");
